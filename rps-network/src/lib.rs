@@ -1,7 +1,16 @@
 use rand::Rng;
 use std::f32;
 
-struct RPSNetwork {
+use wasm_bindgen::prelude::*;
+
+// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
+// allocator.
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+#[wasm_bindgen]
+pub struct RPSNetwork {
     input_size: usize,
     hidden_size: usize,
     output_size: usize,
@@ -13,8 +22,10 @@ struct RPSNetwork {
     probs: Vec<f32>,
 }
 
+#[wasm_bindgen]
 impl RPSNetwork {
-    fn new(input_size: usize, hidden_size: usize, output_size: usize) -> Self {
+    #[wasm_bindgen(constructor)]
+    pub fn new(input_size: usize, hidden_size: usize, output_size: usize) -> Self {
         let mut rng = rand::thread_rng();
 
         let w1 = (0..input_size * hidden_size)
@@ -41,7 +52,8 @@ impl RPSNetwork {
         }
     }
 
-    fn forward(&mut self, input: &[f32]) {
+    #[wasm_bindgen]
+    pub fn forward(&mut self, input: &[f32]) {
         // Compute hidden layer activations
         for i in 0..self.hidden_size {
             let mut h = 0.0;
@@ -74,7 +86,8 @@ impl RPSNetwork {
         }
     }
 
-    fn backward(&mut self, input: &[f32], label: usize, learning_rate: f32) {
+    #[wasm_bindgen]
+    pub fn backward(&mut self, input: &[f32], label: usize, learning_rate: f32) {
         // Compute the error between the predicted and actual output
         let mut dprobs = vec![0.0; self.output_size];
         for i in 0..self.output_size {
