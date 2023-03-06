@@ -11,9 +11,9 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub struct RPSNetwork {
-    input_size: usize,
-    hidden_size: usize,
-    output_size: usize,
+    pub input_size: usize,
+    pub hidden_size: usize,
+    pub output_size: usize,
     w1: Vec<f32>,
     b1: Vec<f32>,
     w2: Vec<f32>,
@@ -126,6 +126,11 @@ impl RPSNetwork {
         for i in 0..self.output_size {
             self.b2[i] -= learning_rate * dprobs[i];
         }
+    }
+
+    #[wasm_bindgen]
+    pub fn probs(self) -> Vec<f32> {
+        self.probs
     }
 }
 
