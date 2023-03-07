@@ -129,8 +129,8 @@ impl RPSNetwork {
     }
 
     #[wasm_bindgen]
-    pub fn probs(self) -> Vec<f32> {
-        self.probs
+    pub fn probs(&mut self) -> Vec<f32> {
+        self.probs.clone()
     }
 }
 
@@ -176,12 +176,14 @@ mod tests {
 
         network.forward(&input);
 
-        let rock_prob = network.probs[0];
+        let paper_prob = network.probs[1];
 
-        network.backward(&input, 0, 0.01);
-        network.forward(&input);
+        for _ in 0..100 {
+            network.backward(&input, 1, 0.01);
+            network.forward(&input);
+        }
 
-        assert!(rock_prob < network.probs[0]);
+        assert!(paper_prob < network.probs[1]);
     }
 
     #[test]
@@ -192,11 +194,13 @@ mod tests {
 
         network.forward(&input);
 
-        let rock_prob = network.probs[0];
+        let scissors_prob = network.probs[2];
 
-        network.backward(&input, 1, 0.01);
-        network.forward(&input);
+        for _ in 0..100 {
+            network.backward(&input, 1, 0.01);
+            network.forward(&input);
+        }
 
-        assert!(rock_prob > network.probs[0]);
+        assert!(scissors_prob > network.probs[2]);
     }
 }
