@@ -1,3 +1,6 @@
+/**
+ * @type {import("eslint").Linter.Config.RulesRecord}
+ */
 module.exports = {
   'sort-imports': ['warn', { ignoreDeclarationSort: true }],
   'import/first': 'warn',
