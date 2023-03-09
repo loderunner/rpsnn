@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { RPSNetwork } from 'rps-network'
 
@@ -87,6 +87,7 @@ export default function App() {
   const [games, setGames] = useState<Game[]>([])
   const [network, setNetwork] = useState<RPSNetwork>()
   const [showProbs, setShowProbs] = useState(false)
+  const gameTableRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -95,6 +96,12 @@ export default function App() {
       setNetwork(new m.RPSNetwork(3, 15, 15 * 8, 3))
     })()
   }, [])
+
+  useEffect(() => {
+    if (gameTableRef.current) {
+      gameTableRef.current.scrollTop = gameTableRef.current.scrollHeight
+    }
+  }, [games])
 
   const toggleProbs = useCallback(() => {
     setShowProbs((showProbs) => !showProbs)
@@ -144,7 +151,7 @@ export default function App() {
   )
 
   return (
-    <div>
+    <div className="max-h-screen flex flex-col items-start">
       <div>
         <button onClick={() => playGame(Choice.ROCK)}>
           {choiceEmoji(Choice.ROCK)}
@@ -160,16 +167,18 @@ export default function App() {
         <button onClick={toggleProbs}>Show probs</button>
         <p>{showProbs ? probsTable : null}</p>
       </div>
-      <table className="table-auto">
-        <thead>
-          <tr>
-            <th scope="col">Player</th>
-            <th scope="col">Computer</th>
-            <th scope="col">Outcome</th>
-          </tr>
-        </thead>
-        <tbody>{gameItems}</tbody>
-      </table>
+      <div className="overflow-y-scroll" ref={gameTableRef}>
+        <table className="table-auto">
+          <thead>
+            <tr>
+              <th scope="col">Player</th>
+              <th scope="col">Computer</th>
+              <th scope="col">Outcome</th>
+            </tr>
+          </thead>
+          <tbody>{gameItems}</tbody>
+        </table>
+      </div>
     </div>
   )
 }
