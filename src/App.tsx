@@ -56,7 +56,7 @@ function play(network: RPSNetwork, playerChoice: Choice): Choice {
     }
   }
 
-  network.backward(winsOver(playerChoice), 0.1)
+  network.backward(winsOver(playerChoice), 0.2)
 
   const output = new Float32Array(3).fill(0)
   output[computerChoice] = 1
