@@ -64,7 +64,15 @@ impl RPSNetwork {
 
     #[wasm_bindgen]
     pub fn forward(&mut self, input: &[f32]) {
-        self.push_history(input);
+        // Shift history items and add new item
+        for i in 1..self.history_size {
+            for j in 0..self.input_size {
+                self.history[(i - 1) * self.input_size + j] = self.history[i * self.input_size + j]
+            }
+        }
+        for i in 0..self.input_size {
+            self.history[(self.history_size - 1) * self.input_size + i] = input[i]
+        }
 
         // Compute hidden layer activations
         for i in 0..self.hidden_size {
@@ -137,19 +145,6 @@ impl RPSNetwork {
         }
         for i in 0..self.output_size {
             self.b2[i] -= learning_rate * dprobs[i];
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn push_history(&mut self, input: &[f32]) {
-        // Shift history items and add new item
-        for i in 1..self.history_size {
-            for j in 0..self.input_size {
-                self.history[(i - 1) * self.input_size + j] = self.history[i * self.input_size + j]
-            }
-        }
-        for i in 0..self.input_size {
-            self.history[(self.history_size - 1) * self.input_size + i] = input[i]
         }
     }
 
