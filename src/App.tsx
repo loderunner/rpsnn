@@ -73,6 +73,7 @@ class Game {
 export default function App() {
   const [games, setGames] = useState<Game[]>([])
   const [network, setNetwork] = useState<RPSNetwork>()
+  const [showProbs, setShowProbs] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -80,6 +81,10 @@ export default function App() {
       await m.default()
       setNetwork(new m.RPSNetwork(3, 8, 3))
     })()
+  }, [])
+
+  const toggleProbs = useCallback(() => {
+    setShowProbs((showProbs) => !showProbs)
   }, [])
 
   const playGame = useCallback(
@@ -90,12 +95,35 @@ export default function App() {
     [games, network]
   )
 
+  const probs = network?.probs()
+  let probsTable
+  if (probs) {
+    probsTable = (
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{choiceEmoji(Choice.ROCK)}</th>
+            <th scope="col">{choiceEmoji(Choice.PAPER)}</th>
+            <th scope="col">{choiceEmoji(Choice.SCISSORS)}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{probs[Choice.ROCK].toFixed(2)}</td>
+            <td>{probs[Choice.PAPER].toFixed(2)}</td>
+            <td>{probs[Choice.SCISSORS].toFixed(2)}</td>
+          </tr>
+        </tbody>
+      </table>
+    )
+  }
+
   const gameItems = useMemo(
     () =>
       games.map((g, i) => (
         <tr key={i}>
-          <td>{choiceEmoji(g.playerChoice)}</td>
-          <td>{choiceEmoji(g.computerChoice)}</td>
+          <td className="text-center">{choiceEmoji(g.playerChoice)}</td>
+          <td className="text-center">{choiceEmoji(g.computerChoice)}</td>
           <td>{g.outcome}</td>
         </tr>
       )),
@@ -104,15 +132,21 @@ export default function App() {
 
   return (
     <div>
-      <button onClick={() => playGame(Choice.ROCK)}>
-        {choiceEmoji(Choice.ROCK)}
-      </button>
-      <button onClick={() => playGame(Choice.PAPER)}>
-        {choiceEmoji(Choice.PAPER)}
-      </button>
-      <button onClick={() => playGame(Choice.SCISSORS)}>
-        {choiceEmoji(Choice.SCISSORS)}
-      </button>
+      <div>
+        <button onClick={() => playGame(Choice.ROCK)}>
+          {choiceEmoji(Choice.ROCK)}
+        </button>
+        <button onClick={() => playGame(Choice.PAPER)}>
+          {choiceEmoji(Choice.PAPER)}
+        </button>
+        <button onClick={() => playGame(Choice.SCISSORS)}>
+          {choiceEmoji(Choice.SCISSORS)}
+        </button>
+      </div>
+      <div>
+        <button onClick={toggleProbs}>Show probs</button>
+        <p>{showProbs ? probsTable : null}</p>
+      </div>
       <table className="table-auto">
         <thead>
           <tr>
