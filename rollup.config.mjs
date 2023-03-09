@@ -4,7 +4,9 @@ import replace from '@rollup/plugin-replace'
 import typescript from '@rollup/plugin-typescript'
 import autoprefixer from 'autoprefixer'
 import copy from 'rollup-plugin-copy'
+import livereload from 'rollup-plugin-livereload'
 import postcss from 'rollup-plugin-postcss'
+import serve from 'rollup-plugin-serve'
 import wasmImport from 'rollup-wasm-pack-import'
 import tailwindcss from 'tailwindcss'
 
@@ -47,5 +49,11 @@ export default {
       targets: [{ src: 'public/index.html', dest: 'dist/' }],
     }),
     postcss({ plugins: [tailwindcss, autoprefixer] }),
+    process.env.ROLLUP_WATCH === 'true'
+      ? serve({ contentBase: './dist' })
+      : null,
+    process.env.ROLLUP_WATCH === 'true'
+      ? livereload({ watch: './dist' })
+      : null,
   ],
 }
