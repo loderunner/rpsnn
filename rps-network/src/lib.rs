@@ -12,41 +12,51 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[wasm_bindgen]
 pub struct RPSNetwork {
     pub input_size: usize,
+    pub history_size: usize,
     pub hidden_size: usize,
     pub output_size: usize,
+    history: Vec<f32>,
     w1: Vec<f32>,
     b1: Vec<f32>,
+    hidden: Vec<f32>,
     w2: Vec<f32>,
     b2: Vec<f32>,
-    hidden: Vec<f32>,
     probs: Vec<f32>,
 }
 
 #[wasm_bindgen]
 impl RPSNetwork {
     #[wasm_bindgen(constructor)]
-    pub fn new(input_size: usize, hidden_size: usize, output_size: usize) -> Self {
+    pub fn new(
+        input_size: usize,
+        history_size: usize,
+        hidden_size: usize,
+        output_size: usize,
+    ) -> Self {
         let mut rng = rand::thread_rng();
 
-        let w1 = (0..input_size * hidden_size)
+        let history = vec![0.0; input_size * history_size];
+        let w1 = (0..input_size * history_size * hidden_size)
             .map(|_| rng.gen::<f32>() * 0.2 - 0.1)
             .collect();
         let b1 = vec![0.0; hidden_size];
+        let hidden = vec![0.0; hidden_size];
         let w2 = (0..hidden_size * output_size)
             .map(|_| rng.gen::<f32>() * 0.2 - 0.1)
             .collect();
         let b2 = vec![0.0; output_size];
-        let hidden = vec![0.0; hidden_size];
         let probs = vec![1.0 / (output_size as f32); output_size];
 
         Self {
             input_size,
+            history_size,
             hidden_size,
             output_size,
             w1,
             b1,
             w2,
             b2,
+            history,
             hidden,
             probs,
         }
@@ -54,11 +64,13 @@ impl RPSNetwork {
 
     #[wasm_bindgen]
     pub fn forward(&mut self, input: &[f32]) {
+        self.push_history(input);
+
         // Compute hidden layer activations
         for i in 0..self.hidden_size {
             let mut h = 0.0;
-            for j in 0..self.input_size {
-                h += input[j] * self.w1[j * self.hidden_size + i];
+            for j in 0..self.input_size * self.history_size {
+                h += self.history[j] * self.w1[j * self.hidden_size + i];
             }
             h += self.b1[i];
             self.hidden[i] = h.tanh();
@@ -87,7 +99,7 @@ impl RPSNetwork {
     }
 
     #[wasm_bindgen]
-    pub fn backward(&mut self, input: &[f32], label: usize, learning_rate: f32) {
+    pub fn backward(&mut self, label: usize, learning_rate: f32) {
         // Compute the error between the predicted and actual output
         let mut dprobs = vec![0.0; self.output_size];
         for i in 0..self.output_size {
@@ -115,9 +127,9 @@ impl RPSNetwork {
                 self.w2[i * self.output_size + j] -= learning_rate * self.hidden[i] * dprobs[j];
             }
         }
-        for i in 0..self.input_size {
+        for i in 0..self.input_size * self.history_size {
             for j in 0..self.hidden_size {
-                self.w1[i * self.hidden_size + j] -= learning_rate * input[i] * dhidden[j];
+                self.w1[i * self.hidden_size + j] -= learning_rate * self.history[i] * dhidden[j];
             }
         }
         for i in 0..self.hidden_size {
@@ -125,6 +137,19 @@ impl RPSNetwork {
         }
         for i in 0..self.output_size {
             self.b2[i] -= learning_rate * dprobs[i];
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn push_history(&mut self, input: &[f32]) {
+        // Shift history items and add new item
+        for i in 1..self.history_size {
+            for j in 0..self.input_size {
+                self.history[(i - 1) * self.input_size + j] = self.history[i * self.input_size + j]
+            }
+        }
+        for i in 0..self.input_size {
+            self.history[(self.history_size - 1) * self.input_size + i] = input[i]
         }
     }
 
@@ -139,18 +164,21 @@ mod tests {
     use super::*;
 
     const INPUT_SIZE: usize = 3;
+    const HISTORY_SIZE: usize = 3;
     const HIDDEN_SIZE: usize = 8;
     const OUTPUT_SIZE: usize = 3;
 
     #[test]
     fn init_network() {
-        let network = RPSNetwork::new(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
+        let network = RPSNetwork::new(INPUT_SIZE, HISTORY_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
 
         assert_eq!(network.input_size, INPUT_SIZE);
+        assert_eq!(network.history_size, HISTORY_SIZE);
         assert_eq!(network.hidden_size, HIDDEN_SIZE);
         assert_eq!(network.output_size, OUTPUT_SIZE);
-        assert_eq!(network.w1.len(), INPUT_SIZE * HIDDEN_SIZE);
+        assert_eq!(network.w1.len(), INPUT_SIZE * HISTORY_SIZE * HIDDEN_SIZE);
         assert_eq!(network.b1.len(), HIDDEN_SIZE);
+        assert_eq!(network.history.len(), INPUT_SIZE * HISTORY_SIZE);
         assert_eq!(network.hidden.len(), HIDDEN_SIZE);
         assert_eq!(network.w2.len(), HIDDEN_SIZE * OUTPUT_SIZE);
         assert_eq!(network.b2.len(), OUTPUT_SIZE);
@@ -158,8 +186,23 @@ mod tests {
     }
 
     #[test]
+    fn history() {
+        let mut network = RPSNetwork::new(INPUT_SIZE, HISTORY_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
+
+        let input = vec![1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+
+        network.forward(&input[..3]);
+        network.forward(&input[3..6]);
+        network.forward(&input[6..]);
+
+        for i in 0..9 {
+            assert_eq!(input[i], network.history[i]);
+        }
+    }
+
+    #[test]
     fn forward_pass() {
-        let mut network = RPSNetwork::new(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
+        let mut network = RPSNetwork::new(INPUT_SIZE, HISTORY_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
 
         let input: Vec<f32> = vec![1.0, 0.0, 0.0];
 
@@ -170,7 +213,7 @@ mod tests {
 
     #[test]
     fn backward_pass_success() {
-        let mut network = RPSNetwork::new(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
+        let mut network = RPSNetwork::new(INPUT_SIZE, HISTORY_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
 
         let input: Vec<f32> = vec![1.0, 0.0, 0.0];
 
@@ -179,7 +222,7 @@ mod tests {
         let paper_prob = network.probs[1];
 
         for _ in 0..100 {
-            network.backward(&input, 1, 0.01);
+            network.backward(1, 0.01);
             network.forward(&input);
         }
 
@@ -188,7 +231,7 @@ mod tests {
 
     #[test]
     fn backward_pass_fail() {
-        let mut network = RPSNetwork::new(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
+        let mut network = RPSNetwork::new(INPUT_SIZE, HISTORY_SIZE, HIDDEN_SIZE, OUTPUT_SIZE);
 
         let input: Vec<f32> = vec![1.0, 0.0, 0.0];
 
@@ -197,7 +240,7 @@ mod tests {
         let scissors_prob = network.probs[2];
 
         for _ in 0..100 {
-            network.backward(&input, 1, 0.01);
+            network.backward(1, 0.01);
             network.forward(&input);
         }
 
