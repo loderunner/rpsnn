@@ -1,6 +1,7 @@
 import commonjs from '@rollup/plugin-commonjs'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import replace from '@rollup/plugin-replace'
+import terser from '@rollup/plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 import autoprefixer from 'autoprefixer'
 import copy from 'rollup-plugin-copy'
@@ -49,6 +50,7 @@ export default {
       targets: [{ src: 'public/index.html', dest: 'dist/' }],
     }),
     postcss({ plugins: [tailwindcss, autoprefixer] }),
+    process.env.NODE_ENV === 'production' ? terser() : null,
     process.env.ROLLUP_WATCH === 'true'
       ? serve({ contentBase: './dist' })
       : null,

@@ -31,7 +31,12 @@ export default function ({ packages }) {
         console.log(`compiling ${pkg}`)
         const out = child_process.spawnSync(
           'wasm-pack',
-          ['build', '--target', 'web'],
+          [
+            'build',
+            '--target',
+            'web',
+            process.env.NODE_ENV === 'production' ? '--release' : null,
+          ],
           {
             cwd: resolvedPkgPath,
           }
