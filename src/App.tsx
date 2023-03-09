@@ -38,13 +38,17 @@ function choiceEmoji(choice: Choice): string {
 }
 
 function play(network: RPSNetwork, playerChoice: Choice): Choice {
-  let computerChoice = Choice.ROCK
   const probs = network.probs()
 
-  for (let i = 1; i < 3; i++) {
-    if (probs[i] > probs[computerChoice]) {
-      computerChoice = i
+  let computerChoice = Choice.ROCK
+  let rnd = Math.random()
+  for (let c = Choice.ROCK; c <= Choice.SCISSORS; c++) {
+    const p = probs[c]
+    if (p > rnd) {
+      computerChoice = c
+      break
     }
+    rnd -= p
   }
 
   const input = new Float32Array(3).fill(0)
