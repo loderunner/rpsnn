@@ -8,6 +8,8 @@ import postcss from 'rollup-plugin-postcss'
 import wasmImport from 'rollup-wasm-pack-import'
 import tailwindcss from 'tailwindcss'
 
+import wasmPack from './rollup-plugin-wasm-pack.mjs'
+
 /**
  * @type {import("rollup").RollupOptions}
  */
@@ -20,6 +22,11 @@ export default {
     sourcemap: process.env.NODE_ENV === 'development',
   },
   plugins: [
+    wasmPack({
+      packages: {
+        'rps-network': './rps-network',
+      },
+    }),
     typescript(),
     nodeResolve(),
     commonjs(),
