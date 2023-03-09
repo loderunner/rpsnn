@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  table {
+    @apply mx-2 my-4;
+  }
+
+  tr {
+    @apply my-1;
+  }
+}

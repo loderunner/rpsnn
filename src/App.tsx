@@ -10,9 +10,9 @@ enum Choice {
 }
 
 enum Outcome {
-  Player,
-  Computer,
-  Draw,
+  Player = 'Player',
+  Computer = 'Computer',
+  Draw = 'Draw',
 }
 
 function winsOver(choice: Choice): Choice {
@@ -50,7 +50,7 @@ function play(network: RPSNetwork, playerChoice: Choice): Choice {
   const input = new Float32Array(3).fill(0)
   input[playerChoice] = 1
 
-  network.backward(input, winsOver(playerChoice), 0.01)
+  network.backward(input, winsOver(playerChoice), 0.1)
   network.forward(input)
 
   return computerChoice
@@ -93,11 +93,11 @@ export default function App() {
   const gameItems = useMemo(
     () =>
       games.map((g, i) => (
-        <div key={i}>
-          <span>{choiceEmoji(g.playerChoice)}</span>
-          <span>{choiceEmoji(g.computerChoice)}</span>
-          <span>{g.outcome}</span>
-        </div>
+        <tr key={i}>
+          <td>{choiceEmoji(g.playerChoice)}</td>
+          <td>{choiceEmoji(g.computerChoice)}</td>
+          <td>{g.outcome}</td>
+        </tr>
       )),
     [games]
   )
@@ -113,7 +113,16 @@ export default function App() {
       <button onClick={() => playGame(Choice.SCISSORS)}>
         {choiceEmoji(Choice.SCISSORS)}
       </button>
-      {gameItems}
+      <table className="table-auto">
+        <thead>
+          <tr>
+            <th scope="col">Player</th>
+            <th scope="col">Computer</th>
+            <th scope="col">Outcome</th>
+          </tr>
+        </thead>
+        <tbody>{gameItems}</tbody>
+      </table>
     </div>
   )
 }
