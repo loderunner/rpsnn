@@ -56,14 +56,11 @@ function play(network: RPSNetwork, playerChoice: Choice): Choice {
     }
   }
 
-  network.backward(winsOver(playerChoice), 0.2)
+  network.backward(winsOver(playerChoice), 0.1)
 
-  const output = new Float32Array(3).fill(0)
-  output[computerChoice] = 1
-  network.push_history(output)
-
-  const input = new Float32Array(3).fill(0)
+  const input = new Float32Array(6).fill(0)
   input[playerChoice] = 1
+  input[3 + computerChoice] = 1
   network.forward(input)
 
   return computerChoice
@@ -93,7 +90,7 @@ export default function App() {
     ;(async () => {
       const m = await import('rps-network')
       await m.default()
-      setNetwork(new m.RPSNetwork(3, 15, 15 * 8, 3))
+      setNetwork(new m.RPSNetwork(6, 5, 5 * 8, 3))
     })()
   }, [])
 
