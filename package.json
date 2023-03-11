@@ -38,7 +38,6 @@
     "rollup-plugin-serve": "2.0.2",
     "rollup-wasm-pack-import": "2.0.0",
     "rps-network": "file:./rps-network/pkg",
-    "serve": "14.2.0",
     "tailwindcss": "3.2.7",
     "typescript": "4.9.5",
     "wasm-pack": "0.10.3"

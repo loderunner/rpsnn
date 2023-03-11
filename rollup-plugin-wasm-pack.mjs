@@ -28,19 +28,13 @@ export default function ({ packages }) {
           continue
         }
 
-        console.log(`compiling ${pkg}`)
-        const out = child_process.spawnSync(
-          'wasm-pack',
-          [
-            'build',
-            '--target',
-            'web',
-            process.env.NODE_ENV === 'production' ? '--release' : null,
-          ],
-          {
-            cwd: resolvedPkgPath,
-          }
-        )
+        const args = ['build', '--target', 'web']
+        if (process.env.NODE_ENV === 'production') {
+          args.push('--release')
+        }
+        const out = child_process.spawnSync('wasm-pack', args, {
+          cwd: resolvedPkgPath,
+        })
         if (out.error) {
           this.error(out.error)
         }
